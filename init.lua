@@ -44,6 +44,7 @@ vim.g.mapleader = ' '
 
 -- vim.keymap.set({mode}, {lhs}, {rhs}, {opts})
 vim.keymap.set('n', '<leader>w', '<cmd>write<cr>')
+vim.keymap.set('n', '<leader>q', '<cmd>quit<cr>')
 
 -- Allows system clipboard to connnect to vim yank
 -- https://mitchellt.com/2022/05/15/WSL-Neovim-Lua-and-the-Windows-Clipboard.html
@@ -70,6 +71,7 @@ end
 -- vim.api.nvim_create_user_command({name}, {command}, {opts})
 -- Reloading config
 vim.api.nvim_create_user_command('Rl', 'source $MYVIMRC', {})
+vim.api.nvim_create_user_command('Rc', 'edit $MYVIMRC', {})
 
 -- Where we install our plugins
 require('packer').startup(function(use)
@@ -82,6 +84,14 @@ require('packer').startup(function(use)
     'nvim-lualine/lualine.nvim',
     requires = { 'kyazdani42/nvim-web-devicons', opt = true }
   }
+  -- Treesitter
+  use {
+    'nvim-treesitter/nvim-treesitter',
+    run = function() require('nvim-treesitter.install').update({ with_sync = true }) end,
+  }
+  
+  -- Solarized Color Scheme
+  -- use 'shaunsingh/solarized.nvim'
   ---
   if install_plugins then
     require('packer').sync()
@@ -103,3 +113,23 @@ require('lualine').setup{
   }
 }
 
+require('nvim-treesitter.configs').setup({
+  highlight = {
+    enable = true,
+  },
+  ensure_installed = {
+    'javascript',
+    'typescript',
+    'tsx',
+    'css',
+    'json',
+    'lua',
+    'cpp',
+    'c',
+    'lua',
+    'go',
+    'java'
+  },
+})
+
+-- require('solarized').set()

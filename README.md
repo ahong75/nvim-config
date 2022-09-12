@@ -5,3 +5,4 @@ To-do
 - Get useful plugins
 - Autopairs
 - CP Setup
+  - Snippets
