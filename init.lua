@@ -65,6 +65,12 @@ if IN_WSL then
 
 end
 
+-- User commands
+-- Syntax for creating commands
+-- vim.api.nvim_create_user_command({name}, {command}, {opts})
+-- Reloading config
+vim.api.nvim_create_user_command('Rl', 'source $MYVIMRC', {})
+
 -- Where we install our plugins
 require('packer').startup(function(use)
   ---
@@ -87,3 +93,13 @@ end)
 if install_plugins then
   return
 end
+
+-- Plugin configurations
+
+require('lualine').setup{
+  options = {
+    icons_enabled = true,
+    theme = 'solarized_light'
+  }
+}
+
