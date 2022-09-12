@@ -38,6 +38,8 @@ vim.opt.smartindent = true
 vim.opt.autoindent = true
 -- Makes colorschemes look better if enabled. But with solarized-light, actually makes it look worse
 vim.opt.termguicolors = false
+-- Need this to make system clipboard connect to vim yank
+vim.opt.clipboard = 'unnamedplus'
 
 -- Mapping leader key
 vim.g.mapleader = ' '
@@ -51,19 +53,12 @@ vim.keymap.set('n', '<leader>q', '<cmd>quit<cr>')
 IN_WSL = os.getenv('WSL_DISTRO_NAME') ~= nil
 
 if IN_WSL then
-
     vim.g.clipboard = {
-
           name = 'wsl clipboard',
-
           copy =  { ["+"] = { "clip.exe" },   ["*"] = { "clip.exe" } },
-
           paste = { ["+"] = { "nvim_paste" }, ["*"] = { "nvim_paste" } },
-
           cache_enabled = true
-
       }
-
 end
 
 -- User commands
@@ -89,7 +84,6 @@ require('packer').startup(function(use)
     'nvim-treesitter/nvim-treesitter',
     run = function() require('nvim-treesitter.install').update({ with_sync = true }) end,
   }
-  
   -- Solarized Color Scheme
   -- use 'shaunsingh/solarized.nvim'
   ---

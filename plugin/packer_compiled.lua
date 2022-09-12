@@ -94,6 +94,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/home/ahong75/.local/share/nvim/site/pack/packer/start/packer.nvim",
     url = "https://github.com/wbthomason/packer.nvim"
+  },
+  ["vim-apm"] = {
+    loaded = true,
+    path = "/home/ahong75/.local/share/nvim/site/pack/packer/start/vim-apm",
+    url = "https://github.com/ThePrimeagen/vim-apm"
   }
 }
 
