@@ -28,7 +28,7 @@ vim.opt.wrap = true
 -- Wraps long lines
 vim.opt.breakindent = true
 -- The number of spaces a tab character occupies
-vim.opt.tabstop = 4
+vim.opt.tabstop = 2
 -- The number of spaces nvim will use to indent with
 vim.opt.shiftwidth = 2
 -- Expands tab characters as spaces
@@ -36,13 +36,17 @@ vim.opt.expandtab = true
 -- These two settings can screw with pasting
 vim.opt.smartindent = true
 vim.opt.autoindent = true
+vim.opt.copyindent = true
 -- Makes colorschemes look better if enabled. But with solarized-light, actually makes it look worse
 vim.opt.termguicolors = false
 -- Need this to make system clipboard connect to vim yank
 vim.opt.clipboard = 'unnamedplus'
-
+-- Prevents weird gray sidebar
+vim.opt.signcolumn = 'no'
 -- Mapping leader key
 vim.g.mapleader = ' '
+-- Cursorline (or else it's hard to see)
+-- vim.opt.cursorline = true
 
 -- vim.keymap.set({mode}, {lhs}, {rhs}, {opts})
 vim.keymap.set('n', '<leader>w', '<cmd>write<cr>')
@@ -85,7 +89,22 @@ require('packer').startup(function(use)
     run = function() require('nvim-treesitter.install').update({ with_sync = true }) end,
   }
   -- Solarized Color Scheme
-  -- use 'shaunsingh/solarized.nvim'
+  use 'shaunsingh/solarized.nvim'
+  -- LSP Stuff
+  use {
+    'neovim/nvim-lspconfig',
+    'hrsh7th/cmp-nvim-lsp',
+    'hrsh7th/cmp-buffer',
+    'hrsh7th/cmp-path',
+    'hrsh7th/cmp-cmdline',
+    'hrsh7th/nvim-cmp',
+    }
+  -- Toggleterm
+  use {"akinsho/toggleterm.nvim", tag = '*', config = function()
+    require("toggleterm").setup()
+  end }
+  -- Cursorline
+  use 'yamatsum/nvim-cursorline'
   ---
   if install_plugins then
     require('packer').sync()
@@ -125,5 +144,46 @@ require('nvim-treesitter.configs').setup({
     'java'
   },
 })
+
+require('toggleterm').setup{
+  open_mapping = [[<C-t>]], 
+}
+
+require('nvim-cursorline').setup {
+  cursorline = {
+    enable = true,
+    timeout = 1000,
+    number = false,
+  },
+  cursorword = {
+    enable = true,
+    min_length = 3,
+    hl = { underline = true },
+  }
+}
+-- LSP Global Config
+local lsp_defaults = {
+  flags = {
+    debounce_text_changes = 150,
+  },
+  capabilities = require('cmp_nvim_lsp').update_capabilities(
+    vim.lsp.protocol.make_client_capabilities()
+  ),
+  on_attach = function(client, bufnr)
+    vim.api.nvim_exec_autocmds('User', {pattern = 'LspAttached'})
+  end
+}
+
+local lspconfig = require('lspconfig')
+
+lspconfig.util.default_config = vim.tbl_deep_extend(
+  'force',
+  lspconfig.util.default_config,
+  lsp_defaults
+)
+
+-- LSP Servers
+lspconfig.clangd.setup({})
+-- lspconfig.sumneko_lua.setup({})
 
 -- require('solarized').set()
