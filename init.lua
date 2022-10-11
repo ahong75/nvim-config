@@ -46,7 +46,9 @@ vim.opt.signcolumn = 'no'
 -- Mapping leader key
 vim.g.mapleader = ' '
 -- Cursorline (or else it's hard to see)
--- vim.opt.cursorline = true
+vim.opt.cursorline = false
+-- Prevents terminal cursor from changing
+-- vim.opt.guicursor =
 
 -- vim.keymap.set({mode}, {lhs}, {rhs}, {opts})
 vim.keymap.set('n', '<leader>w', '<cmd>write<cr>')
@@ -54,17 +56,18 @@ vim.keymap.set('n', '<leader>q', '<cmd>quit<cr>')
 
 -- Allows system clipboard to connnect to vim yank
 -- https://mitchellt.com/2022/05/15/WSL-Neovim-Lua-and-the-Windows-Clipboard.html
-IN_WSL = os.getenv('WSL_DISTRO_NAME') ~= nil
+--IN_WSL = os.getenv('WSL_DISTRO_NAME') ~= nil
 
-if IN_WSL then
-    vim.g.clipboard = {
-          name = 'wsl clipboard',
-          copy =  { ["+"] = { "clip.exe" },   ["*"] = { "clip.exe" } },
-          paste = { ["+"] = { "nvim_paste" }, ["*"] = { "nvim_paste" } },
-          cache_enabled = true
-      }
-end
+--if IN_WSL then
+--    vim.g.clipboard = {
+--          name = 'wsl clipboard',
+--          copy =  { ["+"] = { "clip.exe" },   ["*"] = { "clip.exe" } },
+--          --paste = { ["+"] = { "nvim_paste" }, ["*"] = { "nvim_paste" } },
+--          cache_enabled = true
+--      }
+--end
 
+-- User commands
 -- User commands
 -- Syntax for creating commands
 -- vim.api.nvim_create_user_command({name}, {command}, {opts})
@@ -94,17 +97,25 @@ require('packer').startup(function(use)
   use {
     'neovim/nvim-lspconfig',
     'hrsh7th/cmp-nvim-lsp',
+    'hrsh7th/nvim-cmp',
     'hrsh7th/cmp-buffer',
     'hrsh7th/cmp-path',
     'hrsh7th/cmp-cmdline',
-    'hrsh7th/nvim-cmp',
+    'saadparwaiz1/cmp_luasnip',
+    'L3MON4D3/LuaSnip'
     }
   -- Toggleterm
   use {"akinsho/toggleterm.nvim", tag = '*', config = function()
     require("toggleterm").setup()
   end }
-  -- Cursorline
-  use 'yamatsum/nvim-cursorline'
+  -- File Explorer
+  use {
+    'kyazdani42/nvim-tree.lua',
+    requires = {
+      'kyazdani42/nvim-web-devicons', -- optional, for file icons
+    },
+    tag = 'nightly' -- optional, updated every week. (see issue #1193)
+  }
   ---
   if install_plugins then
     require('packer').sync()
@@ -149,41 +160,67 @@ require('toggleterm').setup{
   open_mapping = [[<C-t>]], 
 }
 
-require('nvim-cursorline').setup {
-  cursorline = {
-    enable = true,
-    timeout = 1000,
-    number = false,
-  },
-  cursorword = {
-    enable = true,
-    min_length = 3,
-    hl = { underline = true },
-  }
+require('nvim-tree').setup{
 }
--- LSP Global Config
-local lsp_defaults = {
-  flags = {
-    debounce_text_changes = 150,
-  },
-  capabilities = require('cmp_nvim_lsp').update_capabilities(
-    vim.lsp.protocol.make_client_capabilities()
-  ),
-  on_attach = function(client, bufnr)
-    vim.api.nvim_exec_autocmds('User', {pattern = 'LspAttached'})
-  end
-}
+vim.api.nvim_set_keymap('n', '<leader><Tab>', ':NvimTreeToggle<cr>', {})
+
+-- Add additional capabilities supported by nvim-cmp
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 local lspconfig = require('lspconfig')
 
-lspconfig.util.default_config = vim.tbl_deep_extend(
-  'force',
-  lspconfig.util.default_config,
-  lsp_defaults
-)
+-- Enable some language servers with the additional completion capabilities offered by nvim-cmp
+local servers = { 'clangd' }
+for _, lsp in ipairs(servers) do
+  lspconfig[lsp].setup {
+    -- on_attach = my_custom_on_attach,
+    capabilities = capabilities,
+  }
+end
 
--- LSP Servers
-lspconfig.clangd.setup({})
--- lspconfig.sumneko_lua.setup({})
+-- luasnip setup
+local luasnip = require 'luasnip'
 
--- require('solarized').set()
+-- nvim-cmp setup
+local cmp = require 'cmp'
+cmp.setup {
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<CR>'] = cmp.mapping.confirm {
+      behavior = cmp.ConfirmBehavior.Replace,
+      select = true,
+    },
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+  }),
+  sources = {
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' },
+  },
+}
+
+--require('solarized').set()
